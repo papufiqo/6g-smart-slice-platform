@@ -119,3 +119,20 @@ express Statement of Purpose.
  d. Affirmer understands and acknowledges that Creative Commons is not a
     party to this document and has no duty or obligation with respect to
     this CC0 or use of the Work.
+
+---
+
+# 📝 Mini `README.md` for `backend/`
+
+```markdown
+# Backend — 6G Slice API
+
+Fastify server simulating:
+- Catalog of slice templates
+- Orders (create/update slice instances)
+- Telemetry events via WebSocket
+
+### Run
+```bash
+npm install
+npx ts-node src/server.ts
