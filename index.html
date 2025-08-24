@@ -1,0 +1,1002 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>6G Smart Slice Allocation Control System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+            --success: #2ecc71;
+            --warning: #f39c12;
+            --danger: #e74c3c;
+            --sidebar-width: 250px;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            display: flex;
+            min-height: 100vh;
+        }
+        
+        .sidebar {
+            width: var(--sidebar-width);
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 1.5rem 1rem;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            z-index: 100;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 2rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .logo h1 {
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+        
+        .logo-icon {
+            font-size: 1.8rem;
+        }
+        
+        .sidebar-menu {
+            list-style: none;
+            flex-grow: 1;
+        }
+        
+        .sidebar-menu li {
+            margin-bottom: 0.5rem;
+        }
+        
+        .sidebar-menu a {
+            color: white;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.8rem 1rem;
+            border-radius: 6px;
+            transition: all 0.3s;
+        }
+        
+        .sidebar-menu a:hover, .sidebar-menu a.active {
+            background-color: rgba(255, 255, 255, 0.1);
+        }
+        
+        .sidebar-menu i {
+            width: 20px;
+            text-align: center;
+        }
+        
+        .sidebar-footer {
+            padding-top: 1rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            font-size: 0.8rem;
+            color: rgba(255, 255, 255, 0.7);
+        }
+        
+        .main-content {
+            flex-grow: 1;
+            margin-left: var(--sidebar-width);
+            padding: 1.5rem;
+            width: calc(100% - var(--sidebar-width));
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            background-color: white;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .search-bar {
+            display: flex;
+            align-items: center;
+            background-color: var(--light);
+            border-radius: 4px;
+            padding: 0.5rem 1rem;
+            width: 300px;
+        }
+        
+        .search-bar input {
+            background: transparent;
+            border: none;
+            outline: none;
+            padding: 0.5rem;
+            width: 100%;
+        }
+        
+        .user-menu {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .user-info {
+            text-align: right;
+        }
+        
+        .user-info h4 {
+            font-weight: 500;
+        }
+        
+        .user-info p {
+            font-size: 0.8rem;
+            color: #777;
+        }
+        
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: var(--secondary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+        
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .card-header h2 {
+            font-size: 1.2rem;
+            color: var(--dark);
+        }
+        
+        .card-header .action {
+            color: var(--secondary);
+            cursor: pointer;
+        }
+        
+        .stat {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background-color: #f0f5ff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--secondary);
+            font-size: 1.5rem;
+        }
+        
+        .stat-info h3 {
+            font-size: 1.8rem;
+            color: var(--dark);
+        }
+        
+        .stat-info p {
+            color: #777;
+            font-size: 0.9rem;
+        }
+        
+        .chart-container {
+            height: 250px;
+            margin-top: 1rem;
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        
+        .data-table th, .data-table td {
+            padding: 0.8rem;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .data-table th {
+            color: #777;
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+        
+        .status {
+            padding: 0.3rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            display: inline-block;
+        }
+        
+        .status-active {
+            background-color: #e6f7ee;
+            color: var(--success);
+        }
+        
+        .status-pending {
+            background-color: #fef5e6;
+            color: var(--warning);
+        }
+        
+        .status-inactive {
+            background-color: #ffe6e6;
+            color: var(--danger);
+        }
+        
+        .vertical-tabs {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+            background-color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .tab {
+            padding: 0.8rem 1.5rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+        
+        .tab.active {
+            background-color: var(--secondary);
+            color: white;
+        }
+        
+        .tab:hover:not(.active) {
+            background-color: var(--light);
+        }
+        
+        .slice-configurator {
+            background-color: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            margin-bottom: 1.5rem;
+        }
+        
+        .configurator-header {
+            margin-bottom: 1.5rem;
+        }
+        
+        .configurator-header h2 {
+            font-size: 1.3rem;
+            color: var(--dark);
+            margin-bottom: 0.5rem;
+        }
+        
+        .configurator-header p {
+            color: #777;
+        }
+        
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .form-group label {
+            font-weight: 500;
+            font-size: 0.9rem;
+        }
+        
+        .form-group input, .form-group select {
+            padding: 0.8rem;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+        
+        .slider-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+        
+        .slider {
+            -webkit-appearance: none;
+            width: 100%;
+            height: 5px;
+            border-radius: 5px;
+            background: #d3d3d3;
+            outline: none;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background: var(--secondary);
+            cursor: pointer;
+        }
+        
+        .slider-values {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.8rem;
+            color: #777;
+        }
+        
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .btn-primary {
+            background-color: var(--secondary);
+            color: white;
+        }
+        
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid var(--secondary);
+            color: var(--secondary);
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 1rem;
+            justify-content: flex-end;
+        }
+        
+        .api-console {
+            background-color: white;
+            border-radius: 8px;
+            padding: 1.5rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+        
+        .api-endpoints {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        
+        .api-endpoint {
+            border: 1px solid #eee;
+            border-radius: 6px;
+            padding: 1rem;
+        }
+        
+        .api-method {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+        
+        .get {
+            background-color: #e6f7ee;
+            color: var(--success);
+        }
+        
+        .post {
+            background-color: #f0f5ff;
+            color: var(--secondary);
+        }
+        
+        .put {
+            background-color: #fef5e6;
+            color: var(--warning);
+        }
+        
+        .delete {
+            background-color: #ffe6e6;
+            color: var(--danger);
+        }
+        
+        .api-url {
+            font-family: monospace;
+            margin-bottom: 0.5rem;
+        }
+        
+        .api-description {
+            font-size: 0.9rem;
+            color: #777;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 70px;
+                padding: 1rem 0.5rem;
+            }
+            
+            .logo h1, .sidebar-menu span, .sidebar-footer {
+                display: none;
+            }
+            
+            .logo {
+                justify-content: center;
+            }
+            
+            .main-content {
+                margin-left: 70px;
+                width: calc(100% - 70px);
+            }
+            
+            .dashboard-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .search-bar {
+                width: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <aside class="sidebar">
+        <div class="logo">
+            <div class="logo-icon"><i class="fas fa-satellite-dish"></i></div>
+            <h1>6G Slice Platform</h1>
+        </div>
+        
+        <ul class="sidebar-menu">
+            <li><a href="#" class="active"><i class="fas fa-th-large"></i> <span>Dashboard</span></a></li>
+            <li><a href="#"><i class="fas fa-network-wired"></i> <span>Slice Inventory</span></a></li>
+            <li><a href="#"><i class="fas fa-chart-line"></i> <span>Revenue Analytics</span></a></li>
+            <li><a href="#"><i class="fas fa-code"></i> <span>API Management</span></a></li>
+            <li><a href="#"><i class="fas fa-industry"></i> <span>Customer Verticals</span></a></li>
+            <li><a href="#"><i class="fas fa-sliders-h"></i> <span>Slice Configuration</span></a></li>
+            <li><a href="#"><i class="fas fa-tachometer-alt"></i> <span>Performance</span></a></li>
+            <li><a href="#"><i class="fas fa-money-bill-wave"></i> <span>Billing & Payments</span></a></li>
+            <li><a href="#"><i class="fas fa-shield-alt"></i> <span>Security Policies</span></a></li>
+        </ul>
+        
+        <div class="sidebar-footer">
+            <p>v2.1.0 | 6G Smart Slice</p>
+        </div>
+    </aside>
+    
+    <main class="main-content">
+        <div class="header">
+            <div class="search-bar">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Search slices, APIs, or customers...">
+            </div>
+            
+            <div class="user-menu">
+                <div class="user-info">
+                    <h4>Alex Morgan</h4>
+                    <p>Network Operations</p>
+                </div>
+                <div class="avatar">AM</div>
+            </div>
+        </div>
+        
+        <div class="vertical-tabs">
+            <div class="tab active">All Verticals</div>
+            <div class="tab">Healthcare</div>
+            <div class="tab">Manufacturing</div>
+            <div class="tab">Transportation</div>
+            <div class="tab">Energy</div>
+            <div class="tab">Media & Entertainment</div>
+        </div>
+        
+        <div class="dashboard-grid">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Revenue Overview</h2>
+                    <div class="action"><i class="fas fa-ellipsis-h"></i></div>
+                </div>
+                <div class="stat">
+                    <div class="stat-icon"><i class="fas fa-dollar-sign"></i></div>
+                    <div class="stat-info">
+                        <h3>$2.8M</h3>
+                        <p>Total Revenue</p>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h2>Active Slices</h2>
+                    <div class="action"><i class="fas fa-ellipsis-h"></i></div>
+                </div>
+                <div class="stat">
+                    <div class="stat-icon"><i class="fas fa-link"></i></div>
+                    <div class="stat-info">
+                        <h3>1,243</h3>
+                        <p>Active Network Slices</p>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="slicesChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h2>API Performance</h2>
+                    <div class="action"><i class="fas fa-ellipsis-h"></i></div>
+                </div>
+                <div class="stat">
+                    <div class="stat-icon"><i class="fas fa-chart-bar"></i></div>
+                    <div class="stat-info">
+                        <h3>99.92%</h3>
+                        <p>API Availability</p>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="apiChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="slice-configurator">
+            <div class="configurator-header">
+                <h2>Create New Network Slice</h2>
+                <p>Configure a customized network slice for your customer's specific requirements</p>
+            </div>
+            
+            <div class="form-grid">
+                <div class="form-group">
+                    <label for="sliceName">Slice Name</label>
+                    <input type="text" id="sliceName" placeholder="e.g., Emergency-Services-Slice">
+                </div>
+                
+                <div class="form-group">
+                    <label for="customer">Customer</label>
+                    <select id="customer">
+                        <option value="">Select a customer</option>
+                        <option value="city_hospital">City General Hospital</option>
+                        <option value="auto_manufacture">AutoManufacture Inc</option>
+                        <option value="metro_transit">Metro Transit Authority</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="vertical">Industry Vertical</label>
+                    <select id="vertical">
+                        <option value="">Select a vertical</option>
+                        <option value="healthcare">Healthcare</option>
+                        <option value="manufacturing">Manufacturing</option>
+                        <option value="transportation">Transportation</option>
+                        <option value="energy">Energy</option>
+                        <option value="media">Media & Entertainment</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label for="serviceTier">Service Tier</label>
+                    <select id="serviceTier">
+                        <option value="basic">Basic - Best Effort</option>
+                        <option value="standard">Standard - Guaranteed Bitrate</option>
+                        <option value="premium">Premium - Low Latency</option>
+                        <option value="critical">Critical - Mission Critical</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-grid">
+                <div class="form-group">
+                    <label>Bandwidth (Mbps)</label>
+                    <div class="slider-container">
+                        <input type="range" min="10" max="1000" value="100" class="slider" id="bandwidthSlider">
+                        <div class="slider-values">
+                            <span>10 Mbps</span>
+                            <span id="bandwidthValue">100 Mbps</span>
+                            <span>1000 Mbps</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Latency (ms)</label>
+                    <div class="slider-container">
+                        <input type="range" min="1" max="100" value="10" class="slider" id="latencySlider">
+                        <div class="slider-values">
+                            <span>1 ms</span>
+                            <span id="latencyValue">10 ms</span>
+                            <span>100 ms</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Availability (%)</label>
+                    <div class="slider-container">
+                        <input type="range" min="99" max="99.999" step="0.001" value="99.9" class="slider" id="availabilitySlider">
+                        <div class="slider-values">
+                            <span>99%</span>
+                            <span id="availabilityValue">99.9%</span>
+                            <span>99.999%</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Slice Duration</label>
+                    <select id="sliceDuration">
+                        <option value="1h">1 Hour</option>
+                        <option value="4h">4 Hours</option>
+                        <option value="8h">8 Hours</option>
+                        <option value="24h" selected>24 Hours</option>
+                        <option value="7d">7 Days</option>
+                        <option value="30d">30 Days</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="action-buttons">
+                <button class="btn btn-outline">Save as Template</button>
+                <button class="btn btn-primary">Deploy Slice</button>
+            </div>
+        </div>
+        
+        <div class="dashboard-grid">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Vertical Distribution</h2>
+                    <div class="action"><i class="fas fa-ellipsis-h"></i></div>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Vertical</th>
+                            <th>Slices</th>
+                            <th>Revenue</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Healthcare</td>
+                            <td>412</td>
+                            <td>$1.2M</td>
+                            <td><span class="status status-active">Active</span></td>
+                        </tr>
+                        <tr>
+                            <td>Manufacturing</td>
+                            <td>387</td>
+                            <td>$856K</td>
+                            <td><span class="status status-active">Active</span></td>
+                        </tr>
+                        <tr>
+                            <td>Transportation</td>
+                            <td>215</td>
+                            <td>$512K</td>
+                            <td><span class="status status-active">Active</span></td>
+                        </tr>
+                        <tr>
+                            <td>Energy</td>
+                            <td>129</td>
+                            <td>$184K</td>
+                            <td><span class="status status-pending">Pending</span></td>
+                        </tr>
+                        <tr>
+                            <td>Media & Entertainment</td>
+                            <td>98</td>
+                            <td>$98K</td>
+                            <td><span class="status status-active">Active</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h2>Recent Transactions</h2>
+                    <div class="action"><i class="fas fa-ellipsis-h"></i></div>
+                </div>
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Customer</th>
+                            <th>Service</th>
+                            <th>Amount</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>City General Hospital</td>
+                            <td>Emergency Services Slice</td>
+                            <td>$42,500</td>
+                            <td>Oct 12, 2023</td>
+                        </tr>
+                        <tr>
+                            <td>AutoManufacture Inc</td>
+                            <td>Industrial IoT Slice</td>
+                            <td>$38,200</td>
+                            <td>Oct 11, 2023</td>
+                        </tr>
+                        <tr>
+                            <td>Metro Transit Authority</td>
+                            <td>Connected Vehicle Slice</td>
+                            <td>$35,000</td>
+                            <td>Oct 10, 2023</td>
+                        </tr>
+                        <tr>
+                            <td>DataStream Media</td>
+                            <td>AR/VR Content Slice</td>
+                            <td>$28,750</td>
+                            <td>Oct 9, 2023</td>
+                        </tr>
+                        <tr>
+                            <td>SmartGrid Energy</td>
+                            <td>Critical Infrastructure Slice</td>
+                            <td>$52,300</td>
+                            <td>Oct 8, 2023</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="api-console">
+            <div class="card-header">
+                <h2>API Endpoints</h2>
+                <div class="action"><i class="fas fa-ellipsis-h"></i></div>
+            </div>
+            
+            <div class="api-endpoints">
+                <div class="api-endpoint">
+                    <div class="api-method get">GET</div>
+                    <div class="api-url">/api/v1/slices</div>
+                    <div class="api-description">Retrieve all network slices</div>
+                </div>
+                
+                <div class="api-endpoint">
+                    <div class="api-method post">POST</div>
+                    <div class="api-url">/api/v1/slices</div>
+                    <div class="api-description">Create a new network slice</div>
+                </div>
+                
+                <div class="api-endpoint">
+                    <div class="api-method get">GET</div>
+                    <div class="api-url">/api/v1/slices/{id}</div>
+                    <div class="api-description">Retrieve a specific slice</div>
+                </div>
+                
+                <div class="api-endpoint">
+                    <div class="api-method put">PUT</div>
+                    <div class="api-url">/api/v1/slices/{id}</div>
+                    <div class="api-description">Update a network slice</div>
+                </div>
+                
+                <div class="api-endpoint">
+                    <div class="api-method delete">DELETE</div>
+                    <div class="api-url">/api/v1/slices/{id}</div>
+                    <div class="api-description">Delete a network slice</div>
+                </div>
+                
+                <div class="api-endpoint">
+                    <div class="api-method get">GET</div>
+                    <div class="api-url">/api/v1/performance</div>
+                    <div class="api-description">Get performance metrics</div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Initialize charts
+        document.addEventListener('DOMContentLoaded', function() {
+            // Revenue Chart
+            const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+            const revenueChart = new Chart(revenueCtx, {
+                type: 'line',
+                data: {
+                    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
+                    datasets: [{
+                        label: 'Revenue (in millions $)',
+                        data: [1.8, 2.1, 1.9, 2.3, 2.5, 2.2, 2.6, 2.7, 2.5, 2.8],
+                        borderColor: '#3498db',
+                        tension: 0.3,
+                        fill: true,
+                        backgroundColor: 'rgba(52, 152, 219, 0.1)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                drawBorder: false
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Slices Chart
+            const slicesCtx = document.getElementById('slicesChart').getContext('2d');
+            const slicesChart = new Chart(slicesCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['Healthcare', 'Manufacturing', 'Transportation', 'Energy', 'Media'],
+                    datasets: [{
+                        label: 'Active Slices',
+                        data: [412, 387, 215, 129, 98],
+                        backgroundColor: [
+                            'rgba(46, 204, 113, 0.7)',
+                            'rgba(52, 152, 219, 0.7)',
+                            'rgba(155, 89, 182, 0.7)',
+                            'rgba(243, 156, 18, 0.7)',
+                            'rgba(231, 76, 60, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgb(46, 204, 113)',
+                            'rgb(52, 152, 219)',
+                            'rgb(155, 89, 182)',
+                            'rgb(243, 156, 18)',
+                            'rgb(231, 76, 60)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: {
+                                drawBorder: false
+                            }
+                        },
+                        x: {
+                            grid: {
+                                display: false
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // API Chart
+            const apiCtx = document.getElementById('apiChart').getContext('2d');
+            const apiChart = new Chart(apiCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Success', 'Errors'],
+                    datasets: [{
+                        data: [99.92, 0.08],
+                        backgroundColor: [
+                            'rgba(46, 204, 113, 0.7)',
+                            'rgba(231, 76, 60, 0.7)'
+                        ],
+                        borderColor: [
+                            'rgb(46, 204, 113)',
+                            'rgb(231, 76, 60)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    cutout: '70%',
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+            
+            // Slider value updates
+            const bandwidthSlider = document.getElementById('bandwidthSlider');
+            const bandwidthValue = document.getElementById('bandwidthValue');
+            bandwidthSlider.addEventListener('input', function() {
+                bandwidthValue.textContent = this.value + ' Mbps';
+            });
+            
+            const latencySlider = document.getElementById('latencySlider');
+            const latencyValue = document.getElementById('latencyValue');
+            latencySlider.addEventListener('input', function() {
+                latencyValue.textContent = this.value + ' ms';
+            });
+            
+            const availabilitySlider = document.getElementById('availabilitySlider');
+            const availabilityValue = document.getElementById('availabilityValue');
+            availabilitySlider.addEventListener('input', function() {
+                availabilityValue.textContent = this.value + '%';
+            });
+            
+            // Tab functionality
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => {
+                tab.addEventListener('click', function() {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    this.classList.add('active');
+                });
+            });
+        });
+    </script>
+</body>
+</html>
